@@ -66,13 +66,19 @@ input_stream =
   |> IO.gets()
   |> String.trim()
   |> File.stream!()
-  |> Enum.map(&(String.trim(&1) |> Integer.parse() |> elem(0)))
+  |> Stream.map(&(String.trim(&1) |> Integer.parse() |> elem(0)))
 ```
 
 ```output
-[191, 185, 188, 189, 204, 213, 215, 227, 222, 221, 236, 235, 236, 232, 224, 228, 234, 226, 227, 228,
- 230, 232, 234, 213, 197, 198, 210, 238, 248, 261, 263, 265, 262, 295, 296, 311, 330, 333, 337, 344,
- 345, 356, 359, 360, 364, 367, 383, 386, 387, 391, ...]
+#Stream<[
+  enum: %File.Stream{
+    line_or_bytes: :line,
+    modes: [:raw, :read_ahead, :binary],
+    path: "/data/assets/day-1-sonar-input.txt",
+    raw: true
+  },
+  funs: [#Function<47.58486609/1 in Stream.map/2>]
+]>
 ```
 
 ## __ |> Solution
@@ -150,9 +156,9 @@ Consider sums of a three-measurement sliding window. How many sums are larger th
 
 ```elixir
 input_stream
-|> Enum.chunk_every(3, 1, :discard)
-|> Enum.map(&Enum.sum/1)
-|> Enum.chunk_every(2, 1, :discard)
+|> Stream.chunk_every(3, 1, :discard)
+|> Stream.map(&Enum.sum/1)
+|> Stream.chunk_every(2, 1, :discard)
 |> Enum.count(fn
   [first, second] when second > first -> true
   _ -> false
