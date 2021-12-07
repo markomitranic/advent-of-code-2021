@@ -12,6 +12,33 @@ Before you know it, you're inside a submarine the Elves keep ready for situation
 
 Your instincts tell you that in order to save Christmas, you'll need to get all fifty stars by December 25th. Collect stars by solving puzzles. Two puzzles will be made available on each day in the Advent calendar; the second puzzle is unlocked when you complete the first. Each puzzle grants one star. Good luck!
 
+```elixir
+Mix.install([
+  {:kino, "~> 0.4.1"},
+  {:vega_lite, "~> 0.1.2"}
+])
+```
+
+```output
+Resolving Hex dependencies...
+Dependency resolution completed:
+New:
+  kino 0.4.1
+  vega_lite 0.1.2
+* Getting kino (Hex package)
+* Getting vega_lite (Hex package)
+==> vega_lite
+Compiling 5 files (.ex)
+Generated vega_lite app
+==> kino
+Compiling 19 files (.ex)
+Generated kino app
+```
+
+```output
+:ok
+```
+
 ## Day 1
 
 As the submarine drops below the surface of the ocean, it automatically performs a sonar sweep of the nearby sea floor. On a small screen, the sonar sweep report (your puzzle input) appears: each line is a measurement of the sea floor depth as the sweep looks further and further away from the submarine.
@@ -54,16 +81,18 @@ To do this, count the number of times a depth measurement increases from the pre
 
 In this example, there are 7 measurements that are larger than the previous measurement.
 
-## __ |>  Getting Data
+## . . . |>  Getting Data
 
-We store the input in a text file at location `/data/day-1/input.txt`. The data is a series of newline-chunked integer strings.
+We store the input in a text file at location `/data/assets/day-1-sonar-input.txt`. The data is a series of newline-chunked integer strings.
 
-<!-- livebook:{"livebook_object":"cell_input","name":"Input File Path:","type":"text","value":"/data/assets/day-1-sonar-input.txt"} -->
+```elixir
+input = Kino.Input.text("Input File Path:")
+```
 
 ```elixir
 input_stream =
-  "Input File Path:"
-  |> IO.gets()
+  input
+  |> Kino.Input.read()
   |> String.trim()
   |> File.stream!()
   |> Stream.map(&(String.trim(&1) |> Integer.parse() |> elem(0)))
@@ -81,7 +110,7 @@ input_stream =
 ]>
 ```
 
-## __ |> Solution
+## . . . |> Solution
 
 ```elixir
 input_stream
@@ -150,7 +179,7 @@ Consider sums of a three-measurement sliding window. How many sums are larger th
 
 <!-- livebook:{"branch_parent_index":3} -->
 
-## __ |> Solution
+## . . . |> Solution
 
 ```elixir
 input_stream
@@ -207,14 +236,18 @@ After following these instructions, you would have a horizontal position of `15`
 
 Calculate the horizontal position and depth you would have after following the planned course. **What do you get if you multiply your final horizontal position by your final depth?**
 
-## __ |> Getting Data
+## . . . |> Getting Data
 
-<!-- livebook:{"livebook_object":"cell_input","name":"Input File Path:","type":"text","value":"/data/assets/day-2-directions.txt"} -->
+The data for day 2 is stored in a file at `/data/assets/day-2-directions.txt` location.
+
+```elixir
+input = Kino.Input.text("Input File Path:")
+```
 
 ```elixir
 input_stream =
-  "Input File Path:"
-  |> IO.gets()
+  input
+  |> Kino.Input.read()
   |> String.trim()
   |> File.stream!()
   |> Stream.map(
@@ -238,15 +271,33 @@ input_stream =
 ]>
 ```
 
-## __ |> Solution
+## . . . |> Solution
 
 ```elixir
+widget =
+  VegaLite.new(width: 700, height: 400)
+  |> VegaLite.mark(:line)
+  |> VegaLite.encode_field(:x, "x", type: :quantitative)
+  |> VegaLite.encode_field(:y, "y", type: :quantitative)
+  |> Kino.VegaLite.new()
+  |> Kino.render()
+
 input_stream
 |> Enum.reduce({0, 0}, fn
-  {"forward", value}, {acc_x, acc_y} -> {acc_x + value, acc_y}
-  {"up", value}, {acc_x, acc_y} -> {acc_x, acc_y - value}
-  {"down", value}, {acc_x, acc_y} -> {acc_x, acc_y + value}
-  _, acc -> acc
+  {"forward", value}, {acc_x, acc_y} ->
+    new_x = acc_x + value
+    Kino.VegaLite.push(widget, %{x: new_x, y: acc_y})
+    {new_x, acc_y}
+
+  {"up", value}, {acc_x, acc_y} ->
+    new_y = acc_y + value
+    Kino.VegaLite.push(widget, %{x: acc_x, y: new_y})
+    {acc_x, new_y}
+
+  {"down", value}, {acc_x, acc_y} ->
+    new_y = acc_y + value
+    Kino.VegaLite.push(widget, %{x: acc_x, y: new_y})
+    {acc_x, new_y}
 end)
 |> IO.inspect(label: "Horizontal and Vertical position")
 |> (fn {x, y} -> x * y end).()
@@ -254,12 +305,12 @@ end)
 ```
 
 ```output
-Horizontal and Vertical position: {2165, 933}
-Vector result: 2019945
+Horizontal and Vertical position: {2165, 2887}
+Vector result: 6250355
 ```
 
 ```output
-2019945
+6250355
 ```
 
 ## |> Part 2
@@ -292,18 +343,38 @@ Using this new interpretation of the commands, calculate the horizontal position
 
 <!-- livebook:{"branch_parent_index":9} -->
 
-## __ |> Solution
+## . . . |> Solution
 
 ```elixir
+aim_widget =
+  VegaLite.new(width: 700, height: 300)
+  |> VegaLite.mark(:line)
+  |> VegaLite.encode_field(:x, "x", type: :quantitative)
+  |> VegaLite.encode_field(:y, "y", type: :quantitative)
+  |> Kino.VegaLite.new()
+  |> Kino.render()
+
+position_widget =
+  VegaLite.new(width: 700, height: 300)
+  |> VegaLite.mark(:line)
+  |> VegaLite.encode_field(:x, "x", type: :quantitative)
+  |> VegaLite.encode_field(:y, "y", type: :quantitative)
+  |> Kino.VegaLite.new()
+  |> Kino.render()
+
 input_stream
 |> Enum.reduce({0, 0, 0}, fn
   {"forward", value}, {acc_x, acc_y, aim} ->
-    {acc_x + value, acc_y + aim * value, aim}
+    new_y = acc_y + aim * value
+    Kino.VegaLite.push(position_widget, %{x: acc_x, y: new_y})
+    {acc_x + value, new_y, aim}
 
   {"up", value}, {acc_x, acc_y, aim} ->
+    Kino.VegaLite.push(aim_widget, %{x: acc_x, y: aim - value})
     {acc_x, acc_y, aim - value}
 
   {"down", value}, {acc_x, acc_y, aim} ->
+    Kino.VegaLite.push(aim_widget, %{x: acc_x, y: aim + value})
     {acc_x, acc_y, aim + value}
 
   _, acc ->
@@ -321,4 +392,51 @@ Vector result: 1599311480
 
 ```output
 1599311480
+```
+
+## Day 3
+
+The submarine has been making some odd creaking noises, so you ask it to produce a diagnostic report just in case.
+
+## |> Part 1 -
+
+The diagnostic report (your puzzle input) consists of a list of binary numbers which, when decoded properly, can tell you many useful things about the conditions of the submarine. The first parameter to check is the **power consumption**.
+
+You need to use the binary numbers in the diagnostic report to generate two new binary numbers (called the **gamma rate** and **the epsilon rate**). The power consumption can then be found by multiplying the gamma rate by the epsilon rate.
+
+Each bit in the gamma rate can be determined by finding the **most common bit in the corresponding position** of all numbers in the diagnostic report. For example, given the following diagnostic report:
+
+```none
+00100
+11110
+10110
+10111
+10101
+01111
+00111
+11100
+10000
+11001
+00010
+01010
+```
+
+Considering only the first bit of each number, there are five `0` bits and seven `1` bits. Since the most common bit is `1`, the first bit of the gamma rate is `1`.
+
+The most common second bit of the numbers in the diagnostic report is `0`, so the second bit of the gamma rate is `0`.
+
+The most common value of the third, fourth, and fifth bits are `1`, `1`, and `0`, respectively, and so the final three bits of the gamma rate are `110`.
+
+So, the gamma rate is the binary number `10110`, or `22` in decimal.
+
+The epsilon rate is calculated in a similar way; rather than use the most common bit, the least common bit from each position is used. So, the epsilon rate is `01001`, or `9` in decimal. Multiplying the gamma rate (`22`) by the epsilon rate (`9`) produces the power consumption, `198`.
+
+Use the binary numbers in your diagnostic report to calculate the gamma rate and epsilon rate, then multiply them together.
+
+**What is the power consumption of the submarine? (Be sure to represent your answer in decimal, not binary.)**
+
+## . . . |> Data Input
+
+```elixir
+input = Kino.Input.textarea("Input Data:")
 ```
