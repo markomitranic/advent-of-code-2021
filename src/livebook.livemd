@@ -398,7 +398,7 @@ Vector result: 1599311480
 
 The submarine has been making some odd creaking noises, so you ask it to produce a diagnostic report just in case.
 
-## |> Part 1 -
+## |> Part 1 - Power consumption
 
 The diagnostic report (your puzzle input) consists of a list of binary numbers which, when decoded properly, can tell you many useful things about the conditions of the submarine. The first parameter to check is the **power consumption**.
 
@@ -439,4 +439,152 @@ Use the binary numbers in your diagnostic report to calculate the gamma rate and
 
 ```elixir
 input = Kino.Input.textarea("Input Data:")
+```
+
+## . . . |> Calculating common values
+
+We take the input, convert the columns into separate lists. For example:
+
+```none
+00100
+11110
+10110
+
+[
+  [0, 1, 1],
+  [0, 1, 0],
+  [1, 1, 1],
+  [0, 1, 1],
+  [0, 0, 0]
+]
+```
+
+```elixir
+parsed_columns =
+  input
+  |> Kino.Input.read()
+  |> String.split()
+  |> Enum.map(&String.graphemes/1)
+  |> Enum.zip()
+  |> Enum.map(&Tuple.to_list/1)
+```
+
+```output
+[
+  ["0", "0", "1", "1", "0", "1", "1", "1", "1", "1", "1", "1", "0", "0", "0", "1", "0", "0", "1",
+   "1", "0", "1", "1", "0", "0", "0", "0", "1", "1", "1", "0", "0", "0", "1", "1", "1", "0", "0",
+   "1", "1", "0", "0", "1", "0", "0", "1", "1", "0", "1", ...],
+  ["0", "1", "1", "1", "0", "0", "1", "1", "0", "0", "1", "1", "0", "1", "0", "0", "0", "0", "1",
+   "1", "0", "1", "1", "1", "1", "0", "1", "0", "0", "1", "0", "1", "1", "0", "1", "1", "0", "0",
+   "0", "0", "1", "0", "0", "0", "0", "1", "0", "0", ...],
+  ["0", "0", "1", "1", "0", "1", "0", "1", "1", "0", "1", "0", "0", "0", "0", "0", "0", "0", "0",
+   "0", "0", "1", "0", "1", "0", "0", "1", "1", "1", "1", "1", "0", "0", "0", "0", "0", "1", "1",
+   "0", "1", "1", "0", "0", "0", "0", "1", "1", ...],
+  ["1", "0", "1", "1", "0", "1", "1", "0", "1", "0", "0", "0", "1", "1", "1", "1", "0", "1", "0",
+   "1", "1", "1", "1", "0", "1", "1", "0", "0", "1", "0", "0", "1", "0", "1", "0", "0", "0", "0",
+   "1", "1", "0", "1", "1", "0", "1", "1", ...],
+  ["1", "1", "0", "0", "1", "1", "1", "1", "0", "1", "1", "1", "0", "0", "0", "1", "0", "0", "0",
+   "0", "1", "1", "1", "0", "0", "0", "0", "1", "1", "0", "0", "0", "0", "0", "1", "0", "1", "1",
+   "0", "1", "1", "1", "1", "1", "0", ...],
+  ["0", "1", "1", "1", "0", "1", "1", "0", "1", "1", "0", "1", "0", "1", "0", "0", "1", "1", "1",
+   "0", "1", "0", "0", "1", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0",
+   "0", "0", "1", "1", "1", "0", ...],
+  ["0", "0", "0", "0", "0", "1", "0", "0", "1", "0", "1", "0", "1", "1", "1", "0", "0", "1", "0",
+   "0", "0", "0", "0", "1", "1", "1", "1", "1", "0", "1", "0", "0", "0", "1", "0", "0", "0", "1",
+   "1", "0", "0", "1", "1", ...],
+  ["1", "1", "1", "0", "0", "1", "1", "1", "0", "1", "1", "0", "1", "1", "1", "0", "0", "0", "0",
+   "0", "0", "1", "1", "1", "0", "1", "1", "1", "0", "1", "0", "0", "1", "0", "1", "0", "1", "0",
+   "0", "0", "1", "0", ...],
+  ["1", "0", "0", "1", "1", "1", "1", "1", "0", "0", "1", "0", "0", "1", "1", "1", "0", "0", "1",
+   "0", "1", "1", "0", "1", "1", "1", "0", "0", "0", "1", "0", "0", "0", "0", "1", "1", "1", "0",
+   "1", "1", "0", ...],
+  ["0", "0", "0", "0", "1", "0", "0", "1", "0", "0", "1", "1", "1", "1", "1", "1", "1", "0", "1",
+   "1", "0", "0", "0", "1", "0", "1", "1", "0", "1", "0", "1", "0", "0", "0", "1", "0", "1", "1",
+   "1", "0", ...],
+  ["1", "0", "0", "0", "1", "1", "0", "0", "1", "0", "0", "1", "0", "0", "0", "1", "0", "1", "0",
+   "0", "1", "1", "0", "1", "1", "0", "1", "1", "1", "1", "1", "0", "0", "0", "0", "1", "1", "0",
+   "1", ...],
+  ["1", "0", "1", "0", "0", "0", "0", "0", "1", "0", "0", "0", "0", "1", "1", "1", "1", "1", "1",
+   "0", "1", "1", "0", "0", "0", "0", "0", "1", "1", "1", "0", "0", "0", "0", "0", "1", "1", "1",
+   ...]
+]
+```
+
+```elixir
+defmodule CommonFinder do
+  @doc """
+  Takes a list of values finds most and least common ones.
+
+  ## Examples:
+      iex> count_members(["1", "0", "1"])
+      {"1", "0"}
+  """
+  def count_members(list) do
+    map =
+      Enum.reduce(list, %{}, fn
+        item, acc ->
+          acc
+          |> Map.get(item, 0)
+          |> (&(&1 + 1)).()
+          |> (&Map.put(acc, item, &1)).()
+      end)
+
+    {get_member(map, :most), get_member(map, :least)}
+  end
+
+  defp get_member(map, :most),
+    do:
+      map
+      |> Enum.reduce(fn
+        {key, count}, {_, acc_count} when count > acc_count -> {key, count}
+        item, nil -> item
+        _item, acc -> acc
+      end)
+      |> elem(0)
+
+  defp get_member(map, :least),
+    do:
+      map
+      |> Enum.reduce(fn
+        {key, count}, {_, acc_count} when count < acc_count -> {key, count}
+        item, nil -> item
+        _item, acc -> acc
+      end)
+      |> elem(0)
+end
+```
+
+```output
+{:module, CommonFinder, <<70, 79, 82, 49, 0, 0, 10, ...>>, {:get_member, 2}}
+```
+
+## . . . |> Solution
+
+```elixir
+{gamma_binary, epsilon_binary} =
+  parsed_columns
+  |> Enum.map(&CommonFinder.count_members/1)
+  |> Enum.reduce(fn
+    element, nil -> element
+    {most, least}, {acc_most, acc_least} -> {"#{acc_most}#{most}", "#{acc_least}#{least}"}
+  end)
+
+{gamma, ""} = Integer.parse(gamma_binary, 2)
+{epsilon, ""} = Integer.parse(epsilon_binary, 2)
+
+gamma * epsilon
+```
+
+```output
+3923414
+```
+
+## |> Part 2 - Life support Rating
+
+<!-- livebook:{"branch_parent_index":15} -->
+
+## . . . |> Solution
+
+```elixir
+
 ```
