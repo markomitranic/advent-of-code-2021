@@ -1,0 +1,183 @@
+# Day 4
+
+## Dependencies
+
+```elixir
+Mix.install([:kino])
+```
+
+## Test Input - Horizontal
+
+```elixir
+input = """
+7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
+
+22 13 17 11  0
+ 8  2 23  4 24
+21  9 14 16  7
+ 6 10  3 18  5
+ 1 12 20 15 19
+
+ 3 15  0  2 22
+ 9 18 13 17  5
+19  8  7 25 23
+20 11 10 24  4
+14 21 16 12  6
+
+14 21 17 24  4
+10 16 15  9 19
+18  8 23 26 20
+22 11 13  6  5
+ 2  0 12  3  7
+"""
+```
+
+## Test input - Vertical
+
+```elixir
+input = """
+7,4,9,5,22,8,21,6,1,11,17,23
+
+22 13 17 11  0
+ 8  2 23  4 24
+21  9 14 16  7
+ 6 10  3 18  5
+ 1 12 20 15 19
+
+ 3 15  0  2 22
+ 9 18 13 17  5
+19  8  7 25 23
+20 11 10 24  4
+14 21 16 12  6
+
+14 21 17 24  4
+10 16 15  9 19
+18  8 23 26 20
+22 11 13  6  5
+ 2  0 12  3  7
+"""
+```
+
+## Real Input
+
+```elixir
+input = Kino.Input.textarea("Data:")
+```
+
+```elixir
+input = Kino.Input.read(input)
+```
+
+## Solution - Module
+
+```elixir
+defmodule Bingo do
+  def parse_input(input) do
+    input = String.split(input, "\n")
+    draw = input |> then(fn [draw | _] -> String.split(draw, ",") end)
+
+    boards =
+      input
+      |> then(fn [_ | b] -> b end)
+      |> Enum.filter(fn member -> member != "" end)
+      |> Enum.map(&format_line/1)
+      |> Enum.chunk_every(5)
+
+    {draw, boards}
+  end
+
+  def find_winner({draw, boards}) do
+    Enum.reduce_while(draw, boards, fn number, boards ->
+      filled_boards = Enum.map(boards, fn board -> fill(board, number) end)
+
+      case Enum.find(filled_boards, &board_win?/1) do
+        nil -> {:cont, filled_boards}
+        winner -> {:halt, {number, winner}}
+      end
+    end)
+  end
+
+  def find_loser({draw, boards}) do
+    Enum.reduce_while(draw, boards, fn number, boards ->
+      leftover_boards =
+        boards
+        |> Enum.map(fn board -> fill(board, number) end)
+        |> Enum.reject(&board_win?/1)
+
+      case leftover_boards do
+        [] -> {:halt, {number, List.first(leftover_boards)}}
+        _ -> {:cont, leftover_boards}
+      end
+    end)
+  end
+
+  def sum_unmarked(board) do
+    board
+    |> Enum.map(fn line ->
+      line
+      |> Enum.filter(fn {sig, _} -> sig != :yes end)
+      |> Enum.map(fn {_, value} -> String.to_integer(value) end)
+      |> Enum.sum()
+    end)
+    |> Enum.sum()
+  end
+
+  defp fill(board, draw), do: Enum.map(board, fn line -> fill_line(line, draw) end)
+
+  defp fill_line(line, number) do
+    Enum.map(line, fn
+      {:not, ^number} -> {:yes, number}
+      other -> other
+    end)
+  end
+
+  defp board_win?(board), do: Enum.any?([horizontal_win?(board), vertical_win?(board)])
+
+  defp horizontal_win?(board), do: Enum.any?(board, &line_win?/1)
+
+  defp vertical_win?(board) do
+    board
+    |> Enum.zip()
+    |> Enum.map(&Tuple.to_list/1)
+    |> Enum.any?(&line_win?/1)
+  end
+
+  defp line_win?(line) do
+    line
+    |> line_to_binary()
+    |> Enum.sum()
+    |> then(fn sum -> sum == length(line) end)
+  end
+
+  defp format_line(line), do: line |> String.split() |> Enum.map(fn number -> {:not, number} end)
+
+  defp line_to_binary(line),
+    do: line |> Enum.map(fn {sig, _} -> if sig == :yes, do: 1, else: 0 end)
+end
+```
+
+<!-- livebook:{"branch_parent_index":1} -->
+
+## Solution - Part 1
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+input
+|> Bingo.parse_input()
+|> Bingo.find_winner()
+|> then(fn {number, board} -> Bingo.sum_unmarked(board) * String.to_integer(number) end)
+```
+
+<!-- livebook:{"branch_parent_index":1} -->
+
+## Solution - Part 2
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+input
+|> Bingo.parse_input()
+|> Bingo.find_loser()
+|> then(fn {number, board} -> Bingo.sum_unmarked(board) * String.to_integer(number) end)
+```
