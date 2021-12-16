@@ -1,0 +1,70 @@
+# Day 6
+
+## Preparation
+
+```elixir
+Mix.install([:kino])
+```
+
+## Input - Test
+
+```elixir
+input = """
+3,4,3,1,2
+"""
+```
+
+## Input - Real
+
+```elixir
+input = Kino.Input.text("Put here")
+```
+
+```elixir
+input = Kino.Input.read(input)
+```
+
+<!-- livebook:{"branch_parent_index":1} -->
+
+## Solution
+
+```elixir
+input =
+  input
+  |> String.trim()
+  |> String.split(",")
+  |> Enum.map(&String.to_integer/1)
+```
+
+```elixir
+defmodule Lantern do
+  def next_day(map) do
+    laying_eggs = Map.get(map, 0, 0)
+
+    %{}
+    |> Map.put(0, Map.get(map, 1, 0))
+    |> Map.put(1, Map.get(map, 2, 0))
+    |> Map.put(2, Map.get(map, 3, 0))
+    |> Map.put(3, Map.get(map, 4, 0))
+    |> Map.put(4, Map.get(map, 5, 0))
+    |> Map.put(5, Map.get(map, 6, 0))
+    |> Map.put(6, Map.get(map, 7, 0) + laying_eggs)
+    |> Map.put(7, Map.get(map, 8, 0))
+    |> Map.put(8, laying_eggs)
+  end
+
+  def days(map, days) do
+    1..days
+    |> Enum.to_list()
+    |> Enum.reduce(map, fn _day, acc -> Lantern.next_day(acc) end)
+  end
+end
+
+input
+|> Enum.reduce(%{}, fn fish_days, acc ->
+  Map.put(acc, fish_days, 1 + Map.get(acc, fish_days, 0))
+end)
+|> Lantern.days(256)
+|> Map.to_list()
+|> Enum.reduce(0, fn {_day, fish_count}, acc -> acc + fish_count end)
+```

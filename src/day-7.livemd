@@ -1,0 +1,63 @@
+# Day 7
+
+## Preparation
+
+```elixir
+Mix.install([:kino, :math])
+```
+
+## Input - Test
+
+```elixir
+input = """
+16,1,2,0,4,2,7,1,2,14
+"""
+```
+
+## Input - Real
+
+```elixir
+input = Kino.Input.textarea("Put here")
+```
+
+```elixir
+input = Kino.Input.read(input)
+```
+
+<!-- livebook:{"branch_parent_index":1} -->
+
+## Solution - Part 1
+
+```elixir
+input =
+  input
+  |> String.trim()
+  |> String.split(",")
+  |> Enum.map(&String.to_integer/1)
+
+median_position = input |> Math.Enum.median() |> round()
+
+Enum.reduce(input, 0, fn position, acc -> acc + abs(position - median_position) end)
+```
+
+<!-- livebook:{"branch_parent_index":2} -->
+
+## Solution - Part 2
+
+```elixir
+input =
+  input
+  |> String.trim()
+  |> String.split(",")
+  |> Enum.map(&String.to_integer/1)
+
+for i <- 1..length(input) do
+  Enum.reduce(input, 0, fn position, acc ->
+    moves = abs(position - i)
+    terminal_number = moves * (moves + 1) / 2
+    acc + terminal_number
+  end)
+end
+|> Enum.min()
+|> round()
+```
